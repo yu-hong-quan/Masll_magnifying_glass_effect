@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>商城放大镜效果</title>
+    <style>
+                 * {
+                     margin: 0;
+                     padding: 0
+               }
+        
+                #demo {
+                    display: block;
+                    width: 400px;
+                    height: 400px;
+                    margin: 50px;
+                    position: relative;
+                    border: 1px solid #ccc;
+                    cursor: pointer;
+                    border-radius: 11px;
+                }
+       
+               #small-box {
+                    position: relative;
+                    z-index: 1;
+                    border-radius: 10px;
+                }
+                img{
+                    border-radius: 10px;
+                }
+              #float-box {
+                    display: none;
+                   width: 140px;
+                    height: 140px;
+                   position: absolute;
+                    background: #ffffcc;
+                    border: 1px solid #ccc;
+                    filter: alpha(opacity=50);
+                    opacity: 0.5;
+                    border-radius: 10px;
+                }
+        
+                #mark {
+                    position: absolute;
+                    display: block;
+                    width: 400px;
+                    height:400px;
+                    background-color: #fff;
+                    filter: alpha(opacity=0);
+                    opacity: 0;
+                    z-index: 10;
+                    border-radius: 10px;
+                }
+        
+                #big-box {
+                    display: none;
+                    position: absolute;
+                    top: 0;
+                    left: 460px;
+                    width: 400px;
+                    height: 400px;
+                    overflow: hidden;
+                    border: 1px solid #ccc;
+                    z-index: 1;
+                    border-radius: 10px;
+                }
+        
+                #big-box img {
+                    position: absolute;
+                    z-index: 5l;
+                    filter: alpha(opacity=0);
+                    border-radius: 10px;
+                }
+            </style>
+</head>
+<body>
+    <div id="demo">
+        <div id="small-box">
+            <div id="mark"></div>
+            <div id="float-box"></div>
+            <img src="孙雪宁写真1.jpg" width="100%" height="400px"/>
+        </div>
+        <div id="big-box">
+            <img src="孙雪宁写真1.jpg" width="250%" height="250%"/>
+        </div>
+    </div>
+</body>
+<script>
+    
+    // 1、放大镜原理：鼠标在小图片上移动时，通过捕捉鼠标在小图片上的位置来定位大图片的相应位置。
+    // 2、放大镜效果设计所需：页面元素、技术点（事件捕获、定位）、难点（计算）
+    // 3、页面元素：最外层DIV、小图片、大图片、鼠标跟随的小DIV
+    // 4、技术点：onmouseover鼠标移动到指定对象上时发生、onmouseout鼠标移出指定对象上时发生、onmousemove鼠标移动时发生
+    //           offsetLeft、offsetTop、offsetWidth、offsetHeight、event.clientX、event.clientY
+    // 5、offsetLeft与style.left的区别：
+            // style.left：返回的是字符串，如30px；
+            // offsetLeft：返回的是数值，如30；
+            // style.left：可读写；
+            // offsetLeft：只读；
+            // style.left：值需要事先定义好，否则取到的值为空；
+            // offsetLeft：不需要事先定义好值；
+            // 注：如果需要改变DIV的位置，只能修改style.left；
+    // 6、难点：计算
+
+    //页面加载完毕后执行
+    window.onload = function () {
+            var objDemo = document.getElementById("demo");
+            var objMark = document.getElementById("mark");
+            var objFloatBox = document.getElementById("float-box");
+            var objBigBox = document.getElementById("big-box");
+            var objBigBoxImage = objBigBox.getElementsByTagName("img")[0];
+
+            objMark.onmouseover = function () {
+                objFloatBox.style.display = "block"
+                objBigBox.style.display = "block"
+            }
+
+            objMark.onmouseout = function () {
+                objFloatBox.style.display = "none"
+                objBigBox.style.display = "none"
+            }
+
+        objMark.onmousemove = function (ev) {
+
+            var _event = ev || window.event;  //兼容多个浏览器的event参数模式
+
+            // 拿到鼠标的offsetLeft和offsetTop的距离
+                // 获取鼠标距离可视区域的最左侧距离   =  当前鼠标x轴的距离body的距离 - 大盒子demo距离父级元素(此时body)的左侧距离 - small-box这个盒子距离父级元素demo这个盒子的左侧距离 - 放大镜小div的宽度的一半
+                var left = _event.clientX - objDemo.offsetLeft - objFloatBox.offsetWidth / 2;
+                // 获取鼠标距离可视区域的顶部距离   =  当前鼠标Y轴的距离body的距离 - 大盒子demo距离父级元素(此时body)的顶部距离 - small-box这个盒子距离父级元素demo这个盒子的顶部距离 - 放大镜小div的高度的一半
+                var top = _event.clientY - objDemo.offsetTop - objFloatBox.offsetHeight / 2;
+
+            // 设置边界处理，防止移出小图片
+            if (left < 0) {
+                left = 0;
+            } else if (left > (objMark.offsetWidth - objFloatBox.offsetWidth)) {
+                left = objMark.offsetWidth - objFloatBox.offsetWidth;
+            }
+
+            if (top < 0) {
+                top = 0;
+            } else if (top > (objMark.offsetHeight - objFloatBox.offsetHeight)) {
+                top = objMark.offsetHeight - objFloatBox.offsetHeight;
+            }
+
+            // 将left值和top值传给放大镜
+            objFloatBox.style.left = left + "px"; 
+            objFloatBox.style.top = top + "px";
+            
+            // 比例计算
+            var percentX = left / (objMark.offsetWidth - objFloatBox.offsetWidth);
+            var percentY = top / (objMark.offsetHeight - objFloatBox.offsetHeight);
+            
+            //方向相反，小图片鼠标移动方向与大图片相反，故而是负值
+            objBigBoxImage.style.left = -percentX * (objBigBoxImage.offsetWidth - objBigBox.offsetWidth) + "px";
+            objBigBoxImage.style.top = -percentY * (objBigBoxImage.offsetHeight - objBigBox.offsetHeight) + "px";
+        }
+    }
+</script>
+</html>
